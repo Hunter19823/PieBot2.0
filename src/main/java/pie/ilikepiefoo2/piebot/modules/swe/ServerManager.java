@@ -5,11 +5,18 @@ import org.javacord.api.entity.channel.ChannelCategory;
 import org.javacord.api.entity.channel.ServerChannel;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.channel.ServerTextChannelBuilder;
+import org.javacord.api.entity.message.MessageBuilder;
+import org.javacord.api.entity.message.component.ActionRow;
+import org.javacord.api.entity.message.component.ActionRowBuilder;
+import org.javacord.api.entity.message.component.Button;
+import org.javacord.api.entity.message.component.ButtonBuilder;
 import org.javacord.api.entity.permission.PermissionType;
 import org.javacord.api.entity.permission.Permissions;
 import org.javacord.api.entity.permission.PermissionsBuilder;
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.User;
+import org.javacord.api.interaction.callback.InteractionFollowupMessageBuilder;
+import pie.ilikepiefoo2.piebot.PieBot;
 
 import java.nio.charset.IllegalCharsetNameException;
 import java.util.HashMap;
@@ -40,6 +47,7 @@ public class ServerManager {
         this.API = api;
         this.SERVER_ID = SERVER_ID;
         this.CATEGORY_ID = CATEGORY_ID;
+        init();
     }
 
     private void init()
@@ -54,9 +62,18 @@ public class ServerManager {
         System.out.println(this.classChannelsMap.size());
     }
 
+    private void updateChannelList()
+    {
+        this.classChannelsMap.clear();
+        getChannelCategory().getChannels().stream().parallel().forEach(
+                this::mapClassTextChannel
+        );
+    }
+
     public Optional<CompletableFuture<Void>> addUserToChannel( User user, String subject, Integer number)
     {
         if(isChannelValid(subject,number)){
+            updateChannelList();
             return Optional.of(
                     getSubjectChannel(subject, number).createUpdater()
                             .addPermissionOverwrite(user,channel_access_permissions)
@@ -71,6 +88,7 @@ public class ServerManager {
     public Optional<CompletableFuture<Void>> removeUserFromChannel( User user, String subject, Integer number)
     {
         if(isChannelValid(subject,number)){
+            updateChannelList();
             return Optional.of(
                     getSubjectChannel(subject, number).createUpdater()
                             .addPermissionOverwrite(user,channel_access_denied_permissions)
@@ -82,34 +100,76 @@ public class ServerManager {
         }
     }
 
-    public CompletableFuture<ServerTextChannel> createNewChannel( String subject, Integer number)
+    public ServerTextChannelBuilder createNewChannel( String subject, Integer number)
     {
         Server server = getServer();
         ServerTextChannelBuilder builder = new ServerTextChannelBuilder(server);
         builder.addPermissionOverwrite(server.getEveryoneRole(),channel_access_denied_permissions);
         builder.setName(String.format("%s-%d",subject,number));
         builder.setCategory(getChannelCategory());
-        return builder.create();
+        return builder;
+    }
+
+    public void askPieForPermission(User user, InteractionFollowupMessageBuilder followupMessageBuilder, String subject, Integer number)
+    {
+        User pie = API.getUserById(PieBot.PIE_ID).join();
+        MessageBuilder builder = new MessageBuilder();
+        builder.setContent(String.format("%s would like to create the channel \"%s-%d\".",user.getNicknameMentionTag(),subject,number));
+        builder.addComponents(
+                ActionRow.of(
+                        Button.success("accept", "Create channel"),
+                        Button.danger("deny","Deny channel creation.")
+                )
+        );
+        long messageID = builder.send(pie).join().getId();
+
+        pie.getPrivateChannel().get().addMessageComponentCreateListener( (event) -> {
+            if(event.getMessageComponentInteraction().getMessageId() == messageID) {
+                switch (event.getMessageComponentInteraction().getCustomId()) {
+                    case "accept":
+                        createNewChannel(subject, number).create().whenComplete(( channel, exc ) -> {
+                            if (exc != null) {
+                                followupMessageBuilder.setContent(String.format("There was an error creating channel \"%s\". Check logs for details.%n", channel.getName())).send();
+                                System.err.printf("Error creating channel \"%s\".%n", channel.getName());
+                                exc.printStackTrace();
+                            } else {
+                                followupMessageBuilder.setContent(String.format("Channel \"%s\" created successfully.%n", channel.getName())).send();
+                                System.out.printf("Channel \"%s\" successfully created.%n", channel.getName());
+                            }
+                        });
+                        break;
+                    case "deny":
+                        System.out.println("Denying request to create channel.");
+                        followupMessageBuilder.setContent("I'm sorry, but your request to make a channel has been denied.").send();
+                        break;
+                }
+                event.getMessageComponentInteraction().asButtonInteraction().get().getMessage().get().delete();
+            }
+        });
     }
 
     private Long mapClassTextChannel( ServerChannel channel)
     {
         ServerTextChannel serverTextChannel = channel.asServerTextChannel().get();
-        String[] temp = serverTextChannel.getName().split("-");
-        Integer subjectNumber;
-        String subjectName;
-        Map<Integer, Long> subjectNumberMap;
-        if(temp.length != 2)
-            throw new IllegalCharsetNameException("The name \""+serverTextChannel.getName()+"\" is an invalid channel name.");
-        subjectName = temp[0];
-        subjectNumber = Integer.parseInt(temp[1]);
-        if(classChannelsMap.containsKey(subjectName)){
-            subjectNumberMap = classChannelsMap.get(subjectName);
+        if(!serverTextChannel.getName().equalsIgnoreCase("info")) {
+            String[] temp = serverTextChannel.getName().split("-");
+            Integer subjectNumber;
+            String subjectName;
+            Map<Integer, Long> subjectNumberMap;
+            if (temp.length != 2)
+                throw new IllegalCharsetNameException("The name \"" + serverTextChannel.getName() + "\" is an invalid channel name.");
+            subjectName = temp[ 0 ];
+            subjectNumber = Integer.parseInt(temp[ 1 ]);
+            if (classChannelsMap.containsKey(subjectName)) {
+                subjectNumberMap = classChannelsMap.get(subjectName);
+            } else {
+                subjectNumberMap = new HashMap<>();
+                classChannelsMap.put(subjectName, subjectNumberMap);
+            }
+            return subjectNumberMap.put(subjectNumber, serverTextChannel.getId());
         }else{
-            subjectNumberMap = new HashMap<>();
-            classChannelsMap.put(subjectName,subjectNumberMap);
+            return 0l;
         }
-        return subjectNumberMap.put(subjectNumber,serverTextChannel.getId());
     }
 
     private Server getServer()

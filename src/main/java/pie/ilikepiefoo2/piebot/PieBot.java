@@ -48,6 +48,7 @@ public class PieBot {
             System.out.println("Exit command not received. Please Type 'exit' to stop.");
         }
         System.out.println("Now disconnecting...");
+        input.close();
         bot.api.disconnect();
         System.out.println("Bot has been disconnected.");
     }

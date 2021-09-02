@@ -11,4 +11,5 @@ public @interface SlashCommandBase {
     public String name() default "test";
     public String description() default "Slash command description";
     public long[] server() default {};
+    public boolean recreateOnStartup() default false;
 }

@@ -67,8 +67,12 @@ public class SoftwareEngineeringModule {
     {
         subject = subject.toLowerCase().trim();
 //        if(sender.getId() == PieBot.PIE_ID){
-            immediateResponseBuilder.setContent(String.format("Now requesting the creation of the \"%s-%d\" channel...%n",subject,number)).respond();
-            MANAGER.askPieForPermission(sender,followupMessageBuilder,subject,number);
+            if(!MANAGER.isChannelValid(subject,number)) {
+                immediateResponseBuilder.setContent(String.format("Now requesting the creation of the \"%s-%d\" channel...%n", subject, number)).respond();
+                MANAGER.askPieForPermission(sender, followupMessageBuilder, subject, number);
+            }else {
+                immediateResponseBuilder.setContent("I'm sorry, this channel already exists. However, I will instead add you to the channel to save you the hassle!").respond();
+            }
 //            immediateResponseBuilder.setContent(String.format("Now creating the \"%s-%d\" channel...%n",subject,number)).respond();
 //            MANAGER.createNewChannel(subject,number).whenComplete( (channel, exc) -> {
 //                if(exc != null){
@@ -110,18 +114,18 @@ public class SoftwareEngineeringModule {
         subject = subject.toLowerCase().trim();
 //        if(sender.getId() == PieBot.PIE_ID){
             if(MANAGER.addUserToChannel(sender,subject,number).isEmpty()){
-                immediateResponseBuilder.setContent("I'm sorry, the command you entered is invalid. Make sure you are typing a valid channel.").respond();
+                immediateResponseBuilder.setContent(String.format("I'm sorry, the command you entered is either invalid, or the channel does not exist yet.\nDouble check that you spelled the class correctly. Does, \"%s-%d\", look correct?\nIf your command was correct then try creating the channel instead with `/class create`%n",subject,number)).respond();
             }else{
                 immediateResponseBuilder.setContent("I will now try to add you to the specified channel. Please wait...").respond();
                 String finalSubject = subject;
                 MANAGER.addUserToChannel(sender,subject,number).get().whenComplete(
                         (nothing,exc) -> {
                             if(exc != null){
-                                followupMessageBuilder.setContent("I'm sorry, but an error has occurred. Tell @ILIKEPIEFOO2#4987 to check logs and fix it.").send();
+                                followupMessageBuilder.setContent(String.format("%s I'm sorry, but an error has occurred. Tell @ILIKEPIEFOO2#4987 to check logs and fix it.%n",sender.getMentionTag())).send();
                                 System.err.println("An error occurred while trying to add a user to a channel.");
                                 exc.printStackTrace();
                             }else{
-                                followupMessageBuilder.setContent(String.format("You now have access to the %s-%d channel.", finalSubject,number)).send();
+                                followupMessageBuilder.setContent(String.format("%s You now have access to the %s-%d channel.%n", sender.getMentionTag(),finalSubject,number)).send();
                             }
                         }
                 );
@@ -156,14 +160,14 @@ public class SoftwareEngineeringModule {
 //        if(sender.getId() == PieBot.PIE_ID){
             subject = subject.toLowerCase().trim();
             if(MANAGER.addUserToChannel(sender,subject,number).isEmpty()){
-                immediateResponseBuilder.setContent("I'm sorry, the command you entered is invalid. Make sure you are typing a valid channel.").respond();
+                immediateResponseBuilder.setContent(String.format("I'm sorry, the command you entered is either invalid, or the channel does not exist yet.\nDouble check that you spelled the class correctly. Does, \"%s-%d\", look correct?%n",subject,number)).respond();
             }else{
                 immediateResponseBuilder.setContent("I will now try to remove you from the specified channel. Please wait...").respond();
                 String finalSubject = subject;
                 MANAGER.removeUserFromChannel(sender,subject,number).get().whenComplete(
                         (nothing,exc) -> {
                             if(exc != null){
-                                followupMessageBuilder.setContent("I'm sorry, but an error has occurred. Tell @ILIKEPIEFOO2#4987 to check logs and fix it.").send();
+                                followupMessageBuilder.setContent(String.format("%s I'm sorry, but an error has occurred. Tell @ILIKEPIEFOO2#4987 to check logs and fix it.%n",sender.getMentionTag())).send();
                                 System.err.println("An error occurred while trying to add a user to a channel.");
                                 exc.printStackTrace();
                             }else{

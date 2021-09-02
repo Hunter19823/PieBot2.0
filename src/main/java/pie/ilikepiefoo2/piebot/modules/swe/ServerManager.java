@@ -62,7 +62,7 @@ public class ServerManager {
         System.out.println(this.classChannelsMap.size());
     }
 
-    private void updateChannelList()
+    public void updateChannelList()
     {
         this.classChannelsMap.clear();
         getChannelCategory().getChannels().stream().parallel().forEach(
@@ -73,7 +73,6 @@ public class ServerManager {
     public Optional<CompletableFuture<Void>> addUserToChannel( User user, String subject, Integer number)
     {
         if(isChannelValid(subject,number)){
-            updateChannelList();
             return Optional.of(
                     getSubjectChannel(subject, number).createUpdater()
                             .addPermissionOverwrite(user,channel_access_permissions)
@@ -88,7 +87,6 @@ public class ServerManager {
     public Optional<CompletableFuture<Void>> removeUserFromChannel( User user, String subject, Integer number)
     {
         if(isChannelValid(subject,number)){
-            updateChannelList();
             return Optional.of(
                     getSubjectChannel(subject, number).createUpdater()
                             .addPermissionOverwrite(user,channel_access_denied_permissions)
@@ -114,7 +112,7 @@ public class ServerManager {
     {
         User pie = API.getUserById(PieBot.PIE_ID).join();
         MessageBuilder builder = new MessageBuilder();
-        builder.setContent(String.format("%s would like to create the channel \"%s-%d\".",user.getNicknameMentionTag(),subject,number));
+        builder.setContent(String.format("%s would like to create the channel \"%s-%d\".%n",user.getNicknameMentionTag(),subject,number));
         builder.addComponents(
                 ActionRow.of(
                         Button.success("accept", "Create channel"),
@@ -129,18 +127,19 @@ public class ServerManager {
                     case "accept":
                         createNewChannel(subject, number).create().whenComplete(( channel, exc ) -> {
                             if (exc != null) {
-                                followupMessageBuilder.setContent(String.format("There was an error creating channel \"%s\". Check logs for details.%n", channel.getName())).send();
+                                followupMessageBuilder.setContent(String.format("%s There was an error creating channel \"%s\". Check logs for details.%n", user.getMentionTag(), channel.getName())).send();
                                 System.err.printf("Error creating channel \"%s\".%n", channel.getName());
                                 exc.printStackTrace();
                             } else {
-                                followupMessageBuilder.setContent(String.format("Channel \"%s\" created successfully.%n", channel.getName())).send();
+                                followupMessageBuilder.setContent(String.format("%s The Channel \"%s\" has been created successfully.%n", user.getMentionTag(),channel.getName())).send();
                                 System.out.printf("Channel \"%s\" successfully created.%n", channel.getName());
+                                channel.createUpdater().addPermissionOverwrite(user,channel_access_permissions).update();
                             }
                         });
                         break;
                     case "deny":
                         System.out.println("Denying request to create channel.");
-                        followupMessageBuilder.setContent("I'm sorry, but your request to make a channel has been denied.").send();
+                        followupMessageBuilder.setContent(String.format("%s I'm sorry, but your request to make the channel \"%s-%d\" has been denied.%n",user.getMentionTag(),subject,number)).send();
                         break;
                 }
                 event.getMessageComponentInteraction().asButtonInteraction().get().getMessage().get().delete();
@@ -187,8 +186,9 @@ public class ServerManager {
         return API.getServerTextChannelById(classChannelsMap.get(subject).get(number)).get();
     }
 
-    private boolean isChannelValid(String subject, Integer number)
+    public boolean isChannelValid(String subject, Integer number)
     {
+        updateChannelList();
         return classChannelsMap.containsKey(subject) && classChannelsMap.get(subject).containsKey(number);
     }
 }

@@ -180,4 +180,15 @@ public class SoftwareEngineeringModule {
 //            immediateResponseBuilder.setContent("You do not have access to this command!").respond();
 //        }
     }
+    @SubSlashCommand(
+            name = "list",
+            description = "List all the currently available class channels."
+    )
+    public static void listClassesCommand(
+            InteractionImmediateResponseBuilder immediateResponseBuilder
+    ){
+        immediateResponseBuilder.setFlags(MessageFlag.EPHEMERAL);
+        immediateResponseBuilder.setContent(MANAGER.getChannel_list());
+        immediateResponseBuilder.respond();
+    }
 }

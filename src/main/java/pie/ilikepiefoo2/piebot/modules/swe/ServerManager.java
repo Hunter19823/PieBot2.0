@@ -19,7 +19,10 @@ import org.javacord.api.interaction.callback.InteractionFollowupMessageBuilder;
 import pie.ilikepiefoo2.piebot.PieBot;
 
 import java.nio.charset.IllegalCharsetNameException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -28,9 +31,11 @@ public class ServerManager {
     private final DiscordApi API;
     private final long SERVER_ID;
     private final long CATEGORY_ID;
+    private String channel_list = "Empty";
     private Map<String,Map<Integer, Long>> classChannelsMap;
     private static final Permissions channel_access_permissions;
     private static final Permissions channel_access_denied_permissions;
+
     static {
         channel_access_permissions =
             new PermissionsBuilder()
@@ -47,19 +52,8 @@ public class ServerManager {
         this.API = api;
         this.SERVER_ID = SERVER_ID;
         this.CATEGORY_ID = CATEGORY_ID;
-        init();
-    }
-
-    private void init()
-    {
-        Server server = getServer();
-        ChannelCategory class_channel_category = getChannelCategory();
-        class_channel_category = server.getChannelCategoryById(753791567449292820l).get();
         this.classChannelsMap = new HashMap<>();
-        class_channel_category.getChannels().stream().parallel().forEach(
-                this::mapClassTextChannel
-        );
-        System.out.println(this.classChannelsMap.size());
+        updateChannelList();
     }
 
     public void updateChannelList()
@@ -68,6 +62,19 @@ public class ServerManager {
         getChannelCategory().getChannels().stream().parallel().forEach(
                 this::mapClassTextChannel
         );
+        List<String> channelList = new ArrayList<>();
+        classChannelsMap.forEach(
+                ( s, integerLongMap ) -> integerLongMap.forEach(
+                        ( integer, aLong ) -> channelList.add(String.format("%s-%d%n",s,integer))
+                )
+        );
+        Collections.sort(channelList);
+        StringBuilder builder = new StringBuilder();
+        channelList.parallelStream().forEachOrdered(
+                builder::append
+        );
+        channelList.clear();
+        this.channel_list = builder.toString();
     }
 
     public Optional<CompletableFuture<Void>> addUserToChannel( User user, String subject, Integer number)
@@ -169,6 +176,11 @@ public class ServerManager {
         }else{
             return 0l;
         }
+    }
+
+    public String getChannel_list()
+    {
+        return this.channel_list;
     }
 
     private Server getServer()

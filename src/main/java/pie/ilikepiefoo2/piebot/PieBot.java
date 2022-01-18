@@ -32,7 +32,7 @@ public class PieBot {
     public static void main( String[] args )
     {
         ModuleLoader.registerModule(SlashCommandHandler.class);
-        ModuleLoader.registerModule(FireWithFire.class);
+        //ModuleLoader.registerModule(FireWithFire.class);
         ModuleLoader.registerModule(new TestModule());
         ModuleLoader.registerSlashCommand(FireWithFire.class);
         ModuleLoader.registerModule(new DMController());

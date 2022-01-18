@@ -67,14 +67,15 @@ public class SlashCommandHandler {
             parameter = parameters[i].getAnnotation(SlashCommandParameter.class);
             if(parameter != null){
                 switch(parameter.type()){
-                    case ROLE -> methodArgs[i] = option.getOptionRoleValueByIndex(optionIndex++).orElse(null);
-                    case USER -> methodArgs[i] = option.getOptionUserValueByIndex(optionIndex++).orElse(null);
-                    case STRING -> methodArgs[i] = option.getOptionStringValueByIndex(optionIndex++).orElse("");
-                    case BOOLEAN -> methodArgs[i] = option.getOptionBooleanValueByIndex(optionIndex++).orElse(false);
-                    case CHANNEL -> methodArgs[i] = option.getOptionChannelValueByIndex(optionIndex++).orElse(null);
-                    case INTEGER -> methodArgs[i] = option.getOptionIntValueByIndex(optionIndex++).orElse(null);
-                    case MENTIONABLE -> methodArgs[i] = option.getOptionMentionableValueByIndex(optionIndex++).orElse(null);
-                    default -> throw new IllegalArgumentException("Invalid Parameter Type!");
+                    case ROLE: methodArgs[i] = option.getOptionRoleValueByIndex(optionIndex++).orElse(null); break;
+                    case USER: methodArgs[i] = option.getOptionUserValueByIndex(optionIndex++).orElse(null); break;
+                    case STRING: methodArgs[i] = option.getOptionStringValueByIndex(optionIndex++).orElse(""); break;
+                    case BOOLEAN: methodArgs[i] = option.getOptionBooleanValueByIndex(optionIndex++).orElse(false); break;
+                    case CHANNEL: methodArgs[i] = option.getOptionChannelValueByIndex(optionIndex++).orElse(null); break;
+                    case INTEGER: methodArgs[i] = option.getOptionIntValueByIndex(optionIndex++).orElse(null); break;
+                    case MENTIONABLE: methodArgs[i] = option.getOptionMentionableValueByIndex(optionIndex++).orElse(null); break;
+                    default:
+                        throw new IllegalArgumentException("Invalid Parameter Type!");
                 }
             }else{
                 if(additionalParameterValues.containsKey(parameters[i].getType())){

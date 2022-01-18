@@ -1,17 +1,22 @@
 plugins {
     id 'java'
+    id "com.github.johnrengelman.shadow" version "7.1.2"
 }
 
 group 'pie.ilikepiefoo2'
-version '1.0-SNAPSHOT'
+version '1.0.3'
+def mainClassName = "pie.ilikepiefoo2.piebot.PieBot"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation 'org.javacord:javacord:3.3.2'
-    runtimeOnly 'org.apache.logging.log4j:log4j-core:2.11.0'
+    implementation group: 'org.javacord', name: 'javacord', version: '3.3.2'
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.17.0'
+    //implementation 'org.javacord:javacord:3.3.2'
+    //runtimeOnly 'org.apache.logging.log4j:log4j-core:2.17.0'
+
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
@@ -19,4 +24,12 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': mainClassName,
+        )
+    }
 }

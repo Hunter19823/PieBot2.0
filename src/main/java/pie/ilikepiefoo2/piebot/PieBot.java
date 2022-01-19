@@ -7,8 +7,6 @@ import pie.ilikepiefoo2.piebot.api.SlashCommandHandler;
 import pie.ilikepiefoo2.piebot.config.ConfigLoader;
 import pie.ilikepiefoo2.piebot.config.ModuleLoader;
 import pie.ilikepiefoo2.piebot.modules.DMController;
-import pie.ilikepiefoo2.piebot.modules.FireWithFire;
-import pie.ilikepiefoo2.piebot.modules.TestModule;
 import pie.ilikepiefoo2.piebot.modules.swe.SoftwareEngineeringModule;
 
 import java.util.Scanner;
@@ -32,9 +30,9 @@ public class PieBot {
     public static void main( String[] args )
     {
         ModuleLoader.registerModule(SlashCommandHandler.class);
-        //ModuleLoader.registerModule(FireWithFire.class);
-        ModuleLoader.registerModule(new TestModule());
-        ModuleLoader.registerSlashCommand(FireWithFire.class);
+        // ModuleLoader.registerModule(FireWithFire.class);
+        // ModuleLoader.registerModule(new TestModule());
+        // ModuleLoader.registerSlashCommand(FireWithFire.class);
         ModuleLoader.registerModule(new DMController());
         ModuleLoader.registerModule(SoftwareEngineeringModule.class);
         ModuleLoader.registerSlashCommand(SoftwareEngineeringModule.class);

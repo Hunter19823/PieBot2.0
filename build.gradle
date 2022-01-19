@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'pie.ilikepiefoo2'
-version '1.0.3'
+version '1.0.4'
 def mainClassName = "pie.ilikepiefoo2.piebot.PieBot"
 
 repositories {
